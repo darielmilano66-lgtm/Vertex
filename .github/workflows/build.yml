@@ -1,0 +1,31 @@
+name: Build Vertex APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip
+        run: |
+          unzip -o Vertex.zip -d. || true
+          if [ -d temp ]; then cp -r temp/..; rm -rf temp; fi
+          if [ -d Vertex/Vertex ]; then cp -r Vertex/Vertex/* Vertex/ || true; fi
+          find. -name "build.gradle.kts" | head -n 5
+      - name: Fix gradle KTS
+        run: |
+          FILE=$(find. -name "build.gradle.kts" | head -n 1)
+          echo "Arreglando $FILE"
+          sed -i -E 's/flutter\.versionCode\(\)?/flutter.versionCode()/g' "$FILE"
+          sed -i -E 's/flutter\.versionName\(\)?/flutter.versionName()/g' "$FILE"
+          sed -i -E 's/\(\)\(\)/()/g' "$FILE"
+          cat "$FILE" | sed -n '28,32p'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vertex-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
