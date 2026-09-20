@@ -1,0 +1,27 @@
+name: Build Vertex APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip project
+        run: |
+          unzip -o Vertex.zip
+          # Mueve todo lo que está dentro de temp/ a la raíz
+          if [ -f temp/pubspec.yaml ]; then
+            cp -r temp/*.
+            cp -r temp/.*. 2>/dev/null || true
+            rm -rf temp
+          fi
+          ls -la
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.22.3'
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vertex-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
